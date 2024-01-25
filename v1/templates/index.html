@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chatbot Interface</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f0f0;
+        }
+
+        .chat-container {
+            max-width: 800px;
+            margin: 50px auto;
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .chat-header {
+            background-color: #581a7a;
+            color: #fff;
+            padding: 15px;
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .logo {
+            width: 40px;
+            height: 40px;
+            margin-right: 10px;
+        }
+
+        .chat-messages {
+            padding: 20px;
+            max-height: 400px;
+            overflow-y: scroll;
+        }
+
+        .user-message, .assistant-message {
+            margin-bottom: 15px;
+            overflow-wrap: break-word;
+        }
+
+        .user-message {
+            text-align: right;
+            color: #007BFF;
+        }
+
+        .assistant-message {
+            text-align: left;
+            color: #28A745;
+        }
+
+        .input-container {
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            padding: 15px;
+            background-color: #eee;
+        }
+
+        #user-input {
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            width: calc(100% - 20px); /* Adjusted width */
+            box-sizing: border-box;
+        }
+
+        #send-button {
+            padding: 10px;
+            background-color: #581a7a;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            width: 100%; /* Button takes full width */
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="chat-header">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/95/Infosys_logo.svg/800px-Infosys_logo.svg.png" width="320" height="128" class="logo">
+            <div class="title">Chatbot Interface</div>
+        </div>
+
+        <div class="chat-messages" id="chat-messages"></div>
+        
+        <div class="input-container">
+            <form id="chat-form">
+                <input type="text" id="user-input" placeholder="Type your message..." onkeydown="if(event.keyCode === 13) { event.preventDefault(); sendMessage(); }">
+                <button id="send-button" type="submit" onclick="sendMessage()">Send</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function sendMessage() {
+            var userInput = document.getElementById("user-input").value;
+            if (userInput.trim() === "") return;
+
+            // Display user message
+            appendMessage("user", userInput);
+            document.getElementById("user-input").value = "";
+
+            // Send user input to the Flask server
+            fetch("/", {
+                method: "POST",
+                body: new URLSearchParams({
+                    'user_input': userInput
+                }),
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Receive and append the assistant's reply
+                var assistantReply = data.assistant_reply;
+                appendMessage("assistant", assistantReply);
+            })
+            .catch(error => console.error('Error:', error));
+        }
+
+        function appendMessage(role, content) {
+            var chatMessages = document.getElementById("chat-messages");
+            var messageDiv = document.createElement("div");
+            messageDiv.className = role + "-message";
+            messageDiv.innerHTML = content;
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        document.getElementById("chat-form").addEventListener("submit", function(event) {
+            event.preventDefault();
+            sendMessage();
+        });
+    </script>
+</body>
+</html>
